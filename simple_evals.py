@@ -4,6 +4,10 @@ import subprocess
 from datetime import datetime
 
 import pandas as pd
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from . import common
 from .browsecomp_eval import BrowseCompEval
@@ -131,6 +135,31 @@ def main():
             model="o3-mini",
             reasoning_effort="low",
         ),
+        # GPT-5.* models
+       "gpt-5.1": ResponsesSampler(
+           model="gpt-5.1-2025-11-13",
+           system_message=OPENAI_SYSTEM_MESSAGE_API,
+           reasoning_model=True,
+           reasoning_effort="medium"
+       ),
+       "gpt-5": ResponsesSampler(
+           model="gpt-5-2025-08-07",
+           system_message=OPENAI_SYSTEM_MESSAGE_API,
+           reasoning_model=True,
+           reasoning_effort="medium"
+       ),
+       "gpt-5-mini": ResponsesSampler(
+           model="gpt-5-mini-2025-08-07",
+           system_message=OPENAI_SYSTEM_MESSAGE_API,
+           reasoning_model=True,
+           reasoning_effort="medium"
+       ),
+       "gpt-5-nano": ResponsesSampler(
+           model="gpt-5-nano-2025-08-07",
+           system_message=OPENAI_SYSTEM_MESSAGE_API,
+           reasoning_model=True,
+           reasoning_effort="medium"
+       ),
         # GPT-4.1 models
         "gpt-4.1": ChatCompletionSampler(
             model="gpt-4.1-2025-04-14",

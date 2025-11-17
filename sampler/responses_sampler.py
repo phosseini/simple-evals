@@ -17,7 +17,7 @@ class ResponsesSampler(SamplerBase):
         self,
         model: str = "gpt-4.1",
         system_message: str | None = None,
-        temperature: float = 0.5,
+        temperature: float | None = None,
         max_tokens: int = 1024,
         reasoning_model: bool = False,
         reasoning_effort: str | None = None,
@@ -72,12 +72,16 @@ class ResponsesSampler(SamplerBase):
                         reasoning=reasoning,
                     )
                 else:
-                    response = self.client.responses.create(
-                        model=self.model,
-                        input=message_list,
-                        temperature=self.temperature,
-                        max_output_tokens=self.max_tokens,
-                    )
+                    # Build API parameters - only include optional params if explicitly set
+                    api_params = {
+                        "model": self.model,
+                        "input": message_list,
+                        "max_output_tokens": self.max_tokens,
+                    }
+                    if self.temperature is not None:
+                        api_params["temperature"] = self.temperature
+
+                    response = self.client.responses.create(**api_params)
                 return SamplerResponse(
                     response_text=response.output_text,
                     response_metadata={"usage": response.usage},
