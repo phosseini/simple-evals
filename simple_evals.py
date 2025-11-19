@@ -152,13 +152,13 @@ def main():
            model="gpt-5-mini-2025-08-07",
            system_message=OPENAI_SYSTEM_MESSAGE_API,
            reasoning_model=True,
-           reasoning_effort="medium"
+           reasoning_effort="high"
        ),
        "gpt-5-nano": ResponsesSampler(
            model="gpt-5-nano-2025-08-07",
            system_message=OPENAI_SYSTEM_MESSAGE_API,
            reasoning_model=True,
-           reasoning_effort="medium"
+           reasoning_effort="high"
        ),
         # GPT-4.1 models
         "gpt-4.1": ChatCompletionSampler(
@@ -262,6 +262,15 @@ def main():
         "claude-3-haiku-20240307": ClaudeCompletionSampler(
             model="claude-3-haiku-20240307",
         ),
+        "claude-sonnet-4-5-20250929": ClaudeCompletionSampler(
+            model="claude-sonnet-4-5-20250929",
+        ),
+        "claude-haiku-4-5-20251001": ClaudeCompletionSampler(
+            model="claude-haiku-4-5-20251001",
+        ),
+        "claude-opus-4-1-20250805": ClaudeCompletionSampler(
+            model="claude-opus-4-1-20250805",
+        ),
     }
 
     if args.list_models:
@@ -283,7 +292,8 @@ def main():
     grading_sampler = ChatCompletionSampler(
         model="gpt-4.1-2025-04-14",
         system_message=OPENAI_SYSTEM_MESSAGE_API,
-        max_tokens=2048,
+        rpm_limit=500,
+        tpm_limit=25000,
     )
     equality_checker = ChatCompletionSampler(model="gpt-4-turbo-preview")
     # ^^^ used for fuzzy matching, just for math

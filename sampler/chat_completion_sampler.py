@@ -1,10 +1,11 @@
 import time
-from typing import Any
+from typing import Any, Optional
 
 import openai
 from openai import OpenAI
 
 from ..types import MessageList, SamplerBase, SamplerResponse
+from .rate_limiter import RateLimiter
 
 OPENAI_SYSTEM_MESSAGE_API = "You are a helpful assistant."
 OPENAI_SYSTEM_MESSAGE_CHATGPT = (
@@ -24,6 +25,8 @@ class ChatCompletionSampler(SamplerBase):
         system_message: str | None = None,
         temperature: float = 0.5,
         max_tokens: int = 1024,
+        rpm_limit: int | None = None,
+        tpm_limit: int | None = None,
     ):
         self.api_key_name = "OPENAI_API_KEY"
         self.client = OpenAI()
@@ -33,6 +36,12 @@ class ChatCompletionSampler(SamplerBase):
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.image_format = "url"
+
+        # Create rate limiter if limits specified
+        if rpm_limit or tpm_limit:
+            self.rate_limiter = RateLimiter(rpm_limit=rpm_limit, tpm_limit=tpm_limit)
+        else:
+            self.rate_limiter = None
 
     def _handle_image(
         self,
@@ -63,6 +72,10 @@ class ChatCompletionSampler(SamplerBase):
         trial = 0
         while True:
             try:
+                # Check rate limits before making request
+                if self.rate_limiter:
+                    self.rate_limiter.acquire()
+
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=message_list,
@@ -72,6 +85,11 @@ class ChatCompletionSampler(SamplerBase):
                 content = response.choices[0].message.content
                 if content is None:
                     raise ValueError("OpenAI API returned empty response; retrying")
+
+                # Report actual token usage after response
+                if self.rate_limiter and response.usage:
+                    self.rate_limiter.report_actual_usage(response.usage.total_tokens)
+
                 return SamplerResponse(
                     response_text=content,
                     response_metadata={"usage": response.usage},
@@ -86,7 +104,7 @@ class ChatCompletionSampler(SamplerBase):
                     actual_queried_message_list=message_list,
                 )
             except Exception as e:
-                exception_backoff = 2**trial  # expontial back off
+                exception_backoff = 60  # Fixed 60 second wait for rate limit window to reset
                 print(
                     f"Rate limit exception so wait and retry {trial} after {exception_backoff} sec",
                     e,
